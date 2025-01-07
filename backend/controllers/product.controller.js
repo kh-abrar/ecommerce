@@ -35,28 +35,41 @@ export const getFeaturedProduct = async (req, res) => {
     }
 }
 
-export const createProduct = async(req, res) => {
+export const createProduct = async (req, res) => {
     try {
-       const {name, description, price, image, category} = req.body;
-       let cloudinaryResponse = null;
+        const { name, description, price, image, category } = req.body;
 
-       if(image){
-        cloudinaryResponse = await cloudinary.uploader.upload(image, {folder: "products"})
-       }
+        if (!name || !description || !price || !category) {
+            return res.status(400).json({ error: "All fields except image are required" });
+        }
 
-       const product = await Product.create({
-        name,
-        description,
-        price,
-        image: cloudinaryResponse?.secure_url ? cloudinaryResponse.secure_url : "",
-        category
-       })
-       res.status(201).json(product);
+        let cloudinaryResponse = null;
+        if (image) {
+            try {
+                cloudinaryResponse = await cloudinary.uploader.upload(image, { folder: "products" });
+                console.log("Cloudinary Upload Response:", cloudinaryResponse);
+            } catch (uploadError) {
+                console.error("Error uploading image to Cloudinary:", uploadError);
+                return res.status(500).json({ error: "Failed to upload image to Cloudinary" });
+            }
+        }
+
+        const product = await Product.create({
+            name,
+            description,
+            price,
+            image: cloudinaryResponse?.secure_url || "",
+            category,
+        });
+
+        console.log("Product Created:", product);
+        res.status(201).json(product);
     } catch (error) {
-        console.log('Error in createProduct controller', error.message);
-        res.status(500).json({error: error.message});
+        console.error("Error in createProduct controller:", error.message);
+        res.status(500).json({ error: error.message });
     }
-}
+};
+
 
 export const deleteProduct = async(req, res) => {
     try {
@@ -106,7 +119,7 @@ export const getProductsByCategory = async(req, res) => {
     const {category} = req.params;
     try {
         const products = await Product.find({category});
-        res.json(products);
+        res.json({products});
     } catch (error) {
         console.log('Error in getProductsByCategory controller', error.message);
         res.status(500).json({error: error.message});
