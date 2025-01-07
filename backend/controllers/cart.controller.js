@@ -35,19 +35,25 @@ export const addToCart = async (req, res) => {
 
 export const removeAllFromCart = async (req, res) => {
     try {
-        const {productId} = req.body;
-        if(!productId){
+        const user = req.user; // Extract user from request
+        const { productId } = req.body;
+
+        if (!productId) {
             user.cartItems = [];
-        }else{
-            user.cartItems = user.cartItems.filter((item)=> item.id !== productId);
+        } else {
+            user.cartItems = user.cartItems.filter(
+                (item) => item.id !== productId
+            );
         }
+
         await user.save();
         res.json(user.cartItems);
     } catch (error) {
-        console.log('Error in addToCart controller', error.message);
-        res.status(500).json({error: error.message});
+        console.log("Error in removeAllFromCart controller", error.message);
+        res.status(500).json({ error: error.message });
     }
-}
+};
+
 
 export const updateQuantity = async(req, res) => {
     try {
